@@ -9,12 +9,9 @@ import CreateRecipe from './pages/CreateRecipe';
 import RecipeDetail from './pages/RecipeDetail';
 
 function App() {
-  // We create a state variable to track if the user is logged in.
-  // We initialize it by checking if a token exists in localStorage.
+
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
 
-  // This effect listens for manual changes to localStorage from other tabs,
-  // though our app's logic will primarily use setIsAuthenticated.
   useEffect(() => {
     const handleStorageChange = () => {
       setIsAuthenticated(!!localStorage.getItem('token'));

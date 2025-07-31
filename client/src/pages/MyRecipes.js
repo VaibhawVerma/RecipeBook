@@ -7,37 +7,35 @@ const MyRecipes = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const fetchUserRecipes = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-        try {
-            const res = await axios.get('/api/recipes/my', {
-                headers: { 'x-auth-token': token 
-            }});
-            setRecipes(res.data);
-        } catch (err) {
-            console.error("Error fetching user recipes:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
+        const fetchUserRecipes = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const res = await axios.get('/api/recipes/my', {
+                    headers: { 'x-auth-token': token }
+                });
+                setRecipes(res.data);
+            } catch (err) {
+                console.error("Error fetching user recipes:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchUserRecipes();
     }, []);
 
     const deleteRecipe = async (id) => {
-        // Using a custom modal instead of window.confirm for better styling
-        if (confirm('Are you sure you want to delete this recipe? This cannot be undone.')) {
+        if (confirm('Are you sure you want to permanently delete this recipe?')) {
             try {
                 const token = localStorage.getItem('token');
                 await axios.delete(`/api/recipes/${id}`, {
                     headers: { 'x-auth-token': token }
                 });
-                // Refetch recipes after deletion by filtering state
                 setRecipes(recipes.filter(recipe => recipe._id !== id));
             } catch (err) {
                 console.error("Error deleting recipe:", err);
@@ -47,7 +45,7 @@ const MyRecipes = () => {
     };
 
     if (loading) {
-        return <p className="text-center mt-8">Loading your recipes...</p>;
+        return <p className="text-center mt-8 text-gray-500">Loading your recipes...</p>;
     }
 
     return (
@@ -67,15 +65,22 @@ const MyRecipes = () => {
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <ul className="divide-y divide-gray-200">
                         {recipes.map(recipe => (
-                            <li key={recipe._id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                            <li key={recipe._id} className="p-4 sm:p-6 group hover:bg-gray-50 transition-colors">
                                 <div className="flex justify-between items-center">
-                                   <div className="flex-grow">
-                                        <h3 className="text-lg font-semibold text-indigo-700">{recipe.title}</h3>
-                                        <p className="text-gray-600 mt-1 text-sm">{recipe.description}</p>
-                                   </div>
+                                   <Link to={`/recipe/${recipe._id}`} className="flex-grow flex items-center space-x-4">
+                                        <img 
+                                            src={recipe.imageUrl || "https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe"} 
+                                            alt={recipe.title}
+                                            className="h-16 w-16 object-cover rounded-md flex-shrink-0"
+                                        />
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-indigo-700 group-hover:underline">{recipe.title}</h3>
+                                            <p className="text-gray-600 mt-1 text-sm">{recipe.description.substring(0, 80)}...</p>
+                                        </div>
+                                   </Link>
                                    <div className="flex space-x-3 flex-shrink-0 ml-4">
-                                       <button onClick={() => navigate(`/edit-recipe/${recipe._id}`)} className="bg-blue-500 text-white py-1 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">Edit</button>
-                                       <button onClick={() => deleteRecipe(recipe._id)} className="bg-red-500 text-white py-1 px-4 rounded-md hover:bg-red-600 transition-colors text-sm font-medium">Delete</button>
+                                       <button onClick={() => navigate(`/edit-recipe/${recipe._id}`)} className="bg-blue-100 text-blue-700 py-1 px-4 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium">Edit</button>
+                                       <button onClick={() => deleteRecipe(recipe._id)} className="bg-red-100 text-red-700 py-1 px-4 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">Delete</button>
                                    </div>
                                 </div>
                             </li>

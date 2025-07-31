@@ -1,5 +1,3 @@
-# This is a comment. Lines starting with # are ignored.
-
 # Dependencies
 # Ignore the node_modules directory in any subfolder (e.g., /client/node_modules and /server/node_modules)
 **/node_modules
