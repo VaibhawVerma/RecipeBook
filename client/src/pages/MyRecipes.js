@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 
 const MyRecipes = () => {
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchUserRecipes = async () => {
             const token = localStorage.getItem('token');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
             try {
-                const res = await axios.get('/api/recipes/my', {
-                    headers: { 'x-auth-token': token }
-                });
+                const res = await axios.get('/api/recipes/my', { headers: { 'x-auth-token': token } });
                 setRecipes(res.data);
             } catch (err) {
                 console.error("Error fetching user recipes:", err);
@@ -25,36 +21,32 @@ const MyRecipes = () => {
                 setLoading(false);
             }
         };
-
         fetchUserRecipes();
     }, []);
 
     const deleteRecipe = async (id) => {
-        if (confirm('Are you sure you want to permanently delete this recipe?')) {
+        // Using a custom modal/confirm could be a future improvement,
+        // but for now, we remove the blocking alert for a smoother flow.
+        if (window.confirm('Are you sure you want to permanently delete this recipe?')) {
             try {
                 const token = localStorage.getItem('token');
-                await axios.delete(`/api/recipes/${id}`, {
-                    headers: { 'x-auth-token': token }
-                });
+                await axios.delete(`/api/recipes/${id}`, { headers: { 'x-auth-token': token } });
                 setRecipes(recipes.filter(recipe => recipe._id !== id));
+                showToast('Recipe deleted successfully.');
             } catch (err) {
                 console.error("Error deleting recipe:", err);
-                alert('Failed to delete recipe.');
+                showToast('Failed to delete recipe.', 'error');
             }
         }
     };
 
-    if (loading) {
-        return <p className="text-center mt-8 text-gray-500">Loading your recipes...</p>;
-    }
+    if (loading) return <p className="text-center mt-8 text-gray-500">Loading your recipes...</p>;
 
     return (
         <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">My Recipes</h1>
-                <Link to="/create-recipe" className="bg-indigo-600 text-white py-2 px-5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-px">
-                    + Add New Recipe
-                </Link>
+                <Link to="/create-recipe" className="bg-indigo-600 text-white py-2 px-5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-px">+ Add New Recipe</Link>
             </div>
             {recipes.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm border-2 border-dashed">
@@ -68,11 +60,7 @@ const MyRecipes = () => {
                             <li key={recipe._id} className="p-4 sm:p-6 group hover:bg-gray-50 transition-colors">
                                 <div className="flex justify-between items-center">
                                    <Link to={`/recipe/${recipe._id}`} className="flex-grow flex items-center space-x-4">
-                                        <img 
-                                            src={recipe.imageUrl || "https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe"} 
-                                            alt={recipe.title}
-                                            className="h-16 w-16 object-cover rounded-md flex-shrink-0"
-                                        />
+                                        <img src={recipe.imageUrl || "[https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe](https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe)"} alt={recipe.title} className="h-16 w-16 object-cover rounded-md flex-shrink-0"/>
                                         <div>
                                             <h3 className="text-lg font-semibold text-indigo-700 group-hover:underline">{recipe.title}</h3>
                                             <p className="text-gray-600 mt-1 text-sm">{recipe.description.substring(0, 80)}...</p>

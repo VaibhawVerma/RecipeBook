@@ -7,11 +7,7 @@ const StarIcon = () => ( <svg className="w-4 h-4 text-yellow-400" fill="currentC
 const RecipeCard = ({ recipe }) => {
     const { favoriteIds, toggleFavorite } = useFavorites();
     const isFavorited = favoriteIds.has(recipe._id);
-
-    // --- FIX 1: Using the consistent placeholder URL ---
     const placeholderImage = "https://placehold.co/600x400/E2E8F0/4A5568?text=Recipe";
-    // --- END FIX 1 ---
-
     const averageRating = recipe.ratings.length > 0 ? (recipe.ratings.reduce((acc, item) => item.value + acc, 0) / recipe.ratings.length).toFixed(1) : 0;
 
     const handleFavoriteClick = (e) => {
@@ -31,23 +27,19 @@ const RecipeCard = ({ recipe }) => {
                 className="absolute top-3 right-3 z-10 bg-white/70 backdrop-blur-sm rounded-full p-2 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100"
                 title={isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`} fill={isFavorited ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     className={`h-6 w-6 transition-colors ${isFavorited ? 'text-red-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`} 
+                     fill={isFavorited ? 'currentColor' : 'none'} 
+                     viewBox="0 0 24 24" 
+                     stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z" />
                 </svg>
             </button>
 
             <Link to={`/recipe/${recipe._id}`} className="block">
-                {/* --- FIX 2: Added a fixed-size container for the image to prevent layout shift --- */}
                 <div className="w-full h-48 bg-gray-200">
-                    <img 
-                        src={recipe.imageUrl || placeholderImage} 
-                        alt={recipe.title} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}
-                    />
+                    <img src={recipe.imageUrl || placeholderImage} alt={recipe.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}/>
                 </div>
-                {/* --- END FIX 2 --- */}
-                
                 <div className="p-6 flex-grow flex flex-col">
                     <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-indigo-600 transition-colors truncate">{recipe.title}</h3>
                     <p className="text-gray-600 mb-4 flex-grow text-sm leading-relaxed">{recipe.description.substring(0, 100)}{recipe.description.length > 100 && '...'}</p>
@@ -66,4 +58,5 @@ const RecipeCard = ({ recipe }) => {
         </div>
     );
 };
+
 export default RecipeCard;

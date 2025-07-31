@@ -13,21 +13,15 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   
   useEffect(() => {
-    const handleAuthChange = () => {
-        const tokenExists = !!localStorage.getItem('token');
-        if (isAuthenticated !== tokenExists) {
-            setIsAuthenticated(tokenExists);
-            window.dispatchEvent(new Event('appAuthChange'));
-        }
+    const syncAuthFromStorage = () => {
+        setIsAuthenticated(!!localStorage.getItem('token'));
     };
-    
-    window.addEventListener('storage', handleAuthChange);
-    window.addEventListener('appAuthChange', handleAuthChange);
-    
-    return () => {
-        window.removeEventListener('storage', handleAuthChange);
-        window.removeEventListener('appAuthChange', handleAuthChange);
-    };
+    window.addEventListener('storage', syncAuthFromStorage);
+    return () => window.removeEventListener('storage', syncAuthFromStorage);
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event('appAuthChange'));
   }, [isAuthenticated]);
 
   return (
