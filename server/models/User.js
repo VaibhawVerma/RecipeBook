@@ -14,6 +14,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'recipe'
+    }],
     date: {
         type: Date,
         default: Date.now,

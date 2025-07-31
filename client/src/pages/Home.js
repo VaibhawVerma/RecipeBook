@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import RecipeCard from '../components/RecipeCard';
+import { CATEGORIES } from '../constants'; // Import categories
+
 
 // A new component for the pagination buttons
 const Pagination = ({ page, pages, onPageChange }) => {
@@ -35,14 +37,14 @@ const Home = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1); // State for current page
     const [pages, setPages] = useState(1); // State for total pages
+    const [activeCategory, setActiveCategory] = useState(''); // State for category filter
 
-    // This useEffect hook now depends on both searchTerm and page
     useEffect(() => {
         const fetchRecipes = async () => {
             setLoading(true);
             try {
-                // The API call now includes both search and page parameters
-                const { data } = await axios.get(`/api/recipes?search=${searchTerm}&page=${page}`);
+                // API call now includes category
+                const { data } = await axios.get(`/api/recipes?search=${searchTerm}&page=${page}&category=${activeCategory}`);
                 setRecipes(data.recipes);
                 setPage(data.page);
                 setPages(data.pages);
@@ -52,18 +54,17 @@ const Home = () => {
                 setLoading(false);
             }
         };
-
-        const timerId = setTimeout(() => {
-            fetchRecipes();
-        }, 300); // Slightly faster debounce
-
+        const timerId = setTimeout(() => { fetchRecipes(); }, 300);
         return () => clearTimeout(timerId);
-    }, [searchTerm, page]); // Re-run when searchTerm or page changes
+    }, [searchTerm, page, activeCategory]); // Re-run when category changes
 
-    // When a new search is performed, reset to page 1
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setPage(1); // Reset to the first page on a new search
+    const handleSearchChange = (e) => { setSearchTerm(e.target.value); setPage(1); };
+    
+    const handleCategoryClick = (category) => {
+        // If clicking the active category, clear the filter. Otherwise, set it.
+        const newCategory = activeCategory === category ? '' : category;
+        setActiveCategory(newCategory);
+        setPage(1); // Reset to page 1
     };
 
     return (
@@ -72,37 +73,37 @@ const Home = () => {
                 <h1 className="text-4xl font-extrabold text-gray-900">Discover Recipes</h1>
                 <p className="mt-2 text-lg text-gray-600">Find your next favorite meal.</p>
             </div>
-
             <div className="mb-8 max-w-2xl mx-auto">
                 <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Search by title, description, or ingredient..."
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
+                    <input type="text" placeholder="Search by title, description, or ingredient..." value={searchTerm} onChange={handleSearchChange} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
             </div>
+            
+            {/* --- NEW CATEGORY FILTER BUTTONS --- */}
+            <div className="flex flex-wrap justify-center gap-2 mb-10">
+                {CATEGORIES.map(cat => (
+                    <button 
+                        key={cat}
+                        onClick={() => handleCategoryClick(cat)}
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${activeCategory === cat ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+            {/* --- END CATEGORY FILTER BUTTONS --- */}
 
-            {loading ? (
-                <p className="text-center text-gray-500">Searching...</p>
-            ) : recipes.length === 0 ? (
+            {loading ? <p className="text-center text-gray-500">Searching...</p> : recipes.length === 0 ? (
                 <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <h3 className="text-xl font-medium text-gray-800">No Recipes Found</h3>
-                    <p className="text-gray-500 mt-2">{searchTerm ? `We couldn't find any recipes for "${searchTerm}". Try another search!` : "No recipes have been shared yet. Be the first!"}</p>
+                    <p className="text-gray-500 mt-2">{searchTerm || activeCategory ? `We couldn't find any recipes for your criteria. Try another search or category!` : "No recipes have been shared yet. Be the first!"}</p>
                 </div>
             ) : (
                 <>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {recipes.map(recipe => (
-                            <RecipeCard key={recipe._id} recipe={recipe} />
-                        ))}
+                        {recipes.map(recipe => <RecipeCard key={recipe._id} recipe={recipe} />)}
                     </div>
-                    {/* Render the new Pagination component */}
                     <Pagination page={page} pages={pages} onPageChange={setPage} />
                 </>
             )}

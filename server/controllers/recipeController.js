@@ -13,34 +13,83 @@ const deleteFile = (filePath) => {
     }
 };
 
-// Get all recipes (UPDATED with search functionality)
+// @desc    Add a comment to a recipe
+// @route   POST /api/recipes/:id/comment
+// @access  Private
+exports.addComment = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('name');
+        const recipe = await Recipe.findById(req.params.id);
+
+        const newComment = {
+            text: req.body.text,
+            name: user.name,
+            user: req.user.id
+        };
+
+        recipe.comments.unshift(newComment); // Add to the beginning of the array
+        await recipe.save();
+        res.json(recipe.comments);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete a comment from a recipe
+// @route   DELETE /api/recipes/:id/comment/:comment_id
+// @access  Private
+exports.deleteComment = async (req, res) => {
+    try {
+        const recipe = await Recipe.findById(req.params.id);
+
+        // Find the comment to be deleted
+        const comment = recipe.comments.find(
+            c => c.id === req.params.comment_id
+        );
+
+        if (!comment) {
+            return res.status(404).json({ msg: 'Comment not found' });
+        }
+
+        // Check if the user trying to delete is the one who made the comment
+        if (comment.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // Remove the comment from the array
+        recipe.comments = recipe.comments.filter(
+            c => c.id !== req.params.comment_id
+        );
+
+        await recipe.save();
+        res.json(recipe.comments);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// Get all recipes (UPDATED with category filter)
 exports.getAllRecipes = async (req, res) => {
-    const pageSize = 8; // Number of recipes per page
-    const page = Number(req.query.page) || 1; // Get page number from query, default to 1
+    const pageSize = 8;
+    const page = Number(req.query.page) || 1;
 
     try {
-        const keyword = req.query.search
-            ? {
-                $or: [
-                    { title: { $regex: req.query.search, $options: 'i' } },
-                    { description: { $regex: req.query.search, $options: 'i' } },
-                    { ingredients: { $regex: req.query.search, $options: 'i' } },
-                ],
-            }
-            : {};
+        const keyword = req.query.search ? { $or: [ { title: { $regex: req.query.search, $options: 'i' } }, { description: { $regex: req.query.search, $options: 'i' } }, { ingredients: { $regex: req.query.search, $options: 'i' } }, ], } : {};
+        
+        // --- NEW CATEGORY FILTER ---
+        const category = req.query.category ? { category: req.query.category } : {};
+        // The final query combines the keyword search and the category filter
+        const finalQuery = { ...keyword, ...category };
+        // --- END CATEGORY FILTER ---
 
-        // First, count the total number of recipes that match the search keyword
-        const count = await Recipe.countDocuments({ ...keyword });
-
-        // Then, find the recipes for the specific page
-        const recipes = await Recipe.find({ ...keyword })
-            .sort({ date: -1 })
-            .limit(pageSize) // Limit the results to the page size
-            .skip(pageSize * (page - 1)); // Skip recipes from previous pages
-
-        // Return the recipes, the current page, and the total number of pages
+        const count = await Recipe.countDocuments(finalQuery);
+        const recipes = await Recipe.find(finalQuery).sort({ date: -1 }).limit(pageSize).skip(pageSize * (page - 1));
+        
         res.json({ recipes, page, pages: Math.ceil(count / pageSize) });
-
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -71,24 +120,14 @@ exports.getUserRecipes = async (req, res) => {
     }
 };
 
-// Create a new recipe
+// Create a new recipe (UPDATED with category)
 exports.createRecipe = async (req, res) => {
-    const { title, description, ingredients, instructions } = req.body;
+    const { title, description, ingredients, instructions, category } = req.body;
     const imageUrl = req.file ? `/${req.file.path.replace(/\\/g, "/")}` : '';
 
     try {
         const user = await User.findById(req.user.id).select('-password');
-        const newRecipe = new Recipe({
-            title,
-            description,
-            // Ensure ingredients are saved as an array
-            ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
-            instructions,
-            imageUrl,
-            author: user.name,
-            user: req.user.id
-        });
-
+        const newRecipe = new Recipe({ title, description, ingredients: Array.isArray(ingredients) ? ingredients : [ingredients], instructions, category, imageUrl, author: user.name, user: req.user.id });
         const recipe = await newRecipe.save();
         res.json(recipe);
     } catch (err) {
@@ -97,30 +136,20 @@ exports.createRecipe = async (req, res) => {
     }
 };
 
-// Update a recipe
+
+// Update a recipe (UPDATED with category)
 exports.updateRecipe = async (req, res) => {
-    const { title, description, ingredients, instructions } = req.body;
-    
+    const { title, description, ingredients, instructions, category } = req.body;
     try {
         let recipe = await Recipe.findById(req.params.id);
         if (!recipe) return res.status(404).json({ msg: 'Recipe not found' });
         if (recipe.user.toString() !== req.user.id) return res.status(401).json({ msg: 'Not authorized' });
         
-        const updatedFields = {
-            title,
-            description,
-            ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
-            instructions
-        };
-        
+        const updatedFields = { title, description, ingredients: Array.isArray(ingredients) ? ingredients : [ingredients], instructions, category };
         if (req.file) {
-            // If a new image is uploaded, delete the old one if it exists
-            if (recipe.imageUrl) {
-                deleteFile(recipe.imageUrl);
-            }
+            if (recipe.imageUrl) { deleteFile(recipe.imageUrl); }
             updatedFields.imageUrl = `/${req.file.path.replace(/\\/g, "/")}`;
         }
-
         recipe = await Recipe.findByIdAndUpdate(req.params.id, { $set: updatedFields }, { new: true });
         res.json(recipe);
     } catch (err) {

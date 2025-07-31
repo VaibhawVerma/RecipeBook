@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const CommentSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
+    name: { type: String, required: true },
+    text: { type: String, required: true },
+    date: { type: Date, default: Date.now }
+});
+
 const RecipeSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: { type: String, required: true },
@@ -9,23 +16,9 @@ const RecipeSchema = new mongoose.Schema({
     imageUrl: { type: String, default: '' },
     author: { type: String },
     
-    // This array will store objects, each with a user's ID and their given rating.
-    ratings: [
-        {
-            user: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'user',
-                required: true,
-            },
-            value: {
-                type: Number,
-                required: true,
-                min: 1,
-                max: 5,
-            },
-        }
-    ],
-
+    category: { type: String },
+    ratings: [ { user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true }, value: { type: Number, required: true, min: 1, max: 5 } } ],
+    comments: [CommentSchema],
     date: { type: Date, default: Date.now }
 });
 
