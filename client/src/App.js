@@ -7,6 +7,7 @@ import Auth from './pages/Auth';
 import MyRecipes from './pages/MyRecipes';
 import CreateRecipe from './pages/CreateRecipe';
 import RecipeDetail from './pages/RecipeDetail';
+import UserProfile from './pages/UserProfile';
 
 function App() {
 
@@ -24,7 +25,7 @@ function App() {
 
   return (
     <Router>
-      {/* The Navbar now renders based on our state variable, ensuring it's always in sync. */}
+      {/* The Navbar renders based on state variable, ensuring it's always in sync. */}
       {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} />}
       
       <main>
@@ -45,6 +46,8 @@ function App() {
           <Route path="/my-recipes" element={isAuthenticated ? <MyRecipes /> : <Navigate to="/auth" />} />
           <Route path="/create-recipe" element={isAuthenticated ? <CreateRecipe /> : <Navigate to="/auth" />} />
           <Route path="/edit-recipe/:id" element={isAuthenticated ? <CreateRecipe /> : <Navigate to="/auth" />} />
+
+          <Route path="/profile/:userId" element={isAuthenticated ? <UserProfile /> : <Navigate to="/auth" />} />
 
           {/* Fallback to redirect any unknown URL to the root path. */}
           <Route path="*" element={<Navigate to="/" />} />
