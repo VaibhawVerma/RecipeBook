@@ -5,15 +5,31 @@ const path = require('path');
 
 // Helper function to delete a file
 const deleteFile = (filePath) => {
-    fs.unlink(path.join(__dirname, '..', filePath), err => {
-        if (err) console.error("Error deleting file:", err);
-    });
+    // Correctly resolve the path from the project root
+    const fullPath = path.join(__dirname, '..', '..', filePath);
+    if (fs.existsSync(fullPath)) {
+        fs.unlink(fullPath, err => {
+            if (err) console.error("Error deleting file:", err);
+        });
+    }
 };
 
-// Get all recipes for the public feed
+// Get all recipes (UPDATED with search functionality)
 exports.getAllRecipes = async (req, res) => {
     try {
-        const recipes = await Recipe.find().sort({ date: -1 });
+        // Check if a 'search' query parameter exists in the URL
+        const keyword = req.query.search
+            ? {
+                // If it exists, create a query object to search across multiple fields
+                $or: [
+                    { title: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on title
+                    { description: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on description
+                    { ingredients: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on ingredients
+                ],
+            }
+            : {}; // If no search query, the filter object is empty and returns all recipes
+
+        const recipes = await Recipe.find({ ...keyword }).sort({ date: -1 });
         res.json(recipes);
     } catch (err) {
         console.error(err.message);
