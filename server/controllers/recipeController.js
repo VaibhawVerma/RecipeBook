@@ -15,21 +15,32 @@ const deleteFile = (filePath) => {
 
 // Get all recipes (UPDATED with search functionality)
 exports.getAllRecipes = async (req, res) => {
+    const pageSize = 8; // Number of recipes per page
+    const page = Number(req.query.page) || 1; // Get page number from query, default to 1
+
     try {
-        // Check if a 'search' query parameter exists in the URL
         const keyword = req.query.search
             ? {
-                // If it exists, create a query object to search across multiple fields
                 $or: [
-                    { title: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on title
-                    { description: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on description
-                    { ingredients: { $regex: req.query.search, $options: 'i' } }, // Case-insensitive search on ingredients
+                    { title: { $regex: req.query.search, $options: 'i' } },
+                    { description: { $regex: req.query.search, $options: 'i' } },
+                    { ingredients: { $regex: req.query.search, $options: 'i' } },
                 ],
             }
-            : {}; // If no search query, the filter object is empty and returns all recipes
+            : {};
 
-        const recipes = await Recipe.find({ ...keyword }).sort({ date: -1 });
-        res.json(recipes);
+        // First, count the total number of recipes that match the search keyword
+        const count = await Recipe.countDocuments({ ...keyword });
+
+        // Then, find the recipes for the specific page
+        const recipes = await Recipe.find({ ...keyword })
+            .sort({ date: -1 })
+            .limit(pageSize) // Limit the results to the page size
+            .skip(pageSize * (page - 1)); // Skip recipes from previous pages
+
+        // Return the recipes, the current page, and the total number of pages
+        res.json({ recipes, page, pages: Math.ceil(count / pageSize) });
+
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
