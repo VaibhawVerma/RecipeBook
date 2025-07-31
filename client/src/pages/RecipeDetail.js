@@ -4,8 +4,10 @@ import { useParams, Link } from 'react-router-dom'; // Import Link
 import StarRating from '../components/StarRating';
 import { jwtDecode } from 'jwt-decode';
 import BackButton from '../components/BackButton';
+import { useToast } from '../context/ToastContext';
 
 const RecipeDetail = () => {
+    const { showToast } = useToast();
     const [recipe, setRecipe] = useState(null);
     const [loading, setLoading] = useState(true);
     const [userRating, setUserRating] = useState(0);
@@ -34,9 +36,20 @@ const RecipeDetail = () => {
         fetchRecipe();
     }, [id]);
 
-    const handleRate = async (rating) => { /* ... (no changes here) ... */ try { const token = localStorage.getItem('token'); const config = { headers: { 'x-auth-token': token } }; const { data } = await axios.put(`/api/recipes/${id}/rate`, { rating }, config); setRecipe(data); setUserRating(rating); } catch (err) { console.error("Error submitting rating:", err); alert(err.response?.data?.msg || 'Failed to submit rating.'); } };
+    const handleRate = async (rating) => {
+        try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { 'x-auth-token': token } };
+            const { data } = await axios.put(`/api/recipes/${id}/rate`, { rating }, config);
+            setRecipe(data);
+            setUserRating(rating);
+            showToast('Rating submitted successfully!'); // 3. Use the toast
+        } catch (err) {
+            console.error("Error submitting rating:", err);
+            showToast(err.response?.data?.msg || 'Failed to submit rating.', 'error'); // 3. Use the toast for errors
+        }
+    };
     
-    // --- NEW COMMENT HANDLERS ---
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
         if (!commentText.trim()) return;
@@ -44,11 +57,12 @@ const RecipeDetail = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { 'x-auth-token': token } };
             const { data } = await axios.post(`/api/recipes/${id}/comment`, { text: commentText }, config);
-            setComments(data); // Update comments with response from server
-            setCommentText(''); // Clear input field
+            setComments(data);
+            setCommentText('');
+            showToast('Comment posted!'); // 3. Use the toast
         } catch (err) {
             console.error("Error posting comment:", err);
-            alert('Failed to post comment.');
+            showToast('Failed to post comment.', 'error'); // 3. Use the toast for errors
         }
     };
 
@@ -58,14 +72,14 @@ const RecipeDetail = () => {
                 const token = localStorage.getItem('token');
                 const config = { headers: { 'x-auth-token': token } };
                 const { data } = await axios.delete(`/api/recipes/${id}/comment/${commentId}`, config);
-                setComments(data); // Update comments list
+                setComments(data);
+                showToast('Comment deleted.'); // 3. Use the toast
             } catch (err) {
                 console.error("Error deleting comment:", err);
-                alert('Failed to delete comment.');
+                showToast('Failed to delete comment.', 'error'); // 3. Use the toast for errors
             }
         }
     };
-    // --- END COMMENT HANDLERS ---
 
     if (loading) return <p className="text-center mt-8">Loading recipe...</p>;
     if (!recipe) return <p className="text-center mt-8 text-red-500">Recipe not found.</p>;
