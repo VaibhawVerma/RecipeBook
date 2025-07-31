@@ -42,5 +42,6 @@ router.get('/:id', recipeController.getRecipeById);
 router.post('/', authMiddleware, upload.single('image'), recipeController.createRecipe);
 router.put('/:id', authMiddleware, upload.single('image'), recipeController.updateRecipe);
 router.delete('/:id', authMiddleware, recipeController.deleteRecipe);
+router.put('/:id/rate', authMiddleware, recipeController.rateRecipe);
 
 module.exports = router;

@@ -5,7 +5,6 @@ const path = require('path');
 
 // Helper function to delete a file
 const deleteFile = (filePath) => {
-    // Correctly resolve the path from the project root
     const fullPath = path.join(__dirname, '..', '..', filePath);
     if (fs.existsSync(fullPath)) {
         fs.unlink(fullPath, err => {
@@ -133,6 +132,47 @@ exports.deleteRecipe = async (req, res) => {
 
         await Recipe.findByIdAndDelete(req.params.id);
         res.json({ msg: 'Recipe removed' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.rateRecipe = async (req, res) => {
+    const { rating } = req.body;
+
+    // Basic validation for the rating value
+    if (rating < 1 || rating > 5) {
+        return res.status(400).json({ msg: 'Rating must be between 1 and 5.' });
+    }
+
+    try {
+        const recipe = await Recipe.findById(req.params.id);
+        if (!recipe) {
+            return res.status(404).json({ msg: 'Recipe not found' });
+        }
+
+        // Prevent the author from rating their own recipe
+        if (recipe.user.toString() === req.user.id) {
+            return res.status(400).json({ msg: 'You cannot rate your own recipe.' });
+        }
+
+        // Check if the user has already rated this recipe
+        const existingRating = recipe.ratings.find(
+            r => r.user.toString() === req.user.id
+        );
+
+        if (existingRating) {
+            // If they have, update their rating
+            existingRating.value = rating;
+        } else {
+            // If they haven't, add a new rating object to the array
+            recipe.ratings.push({ user: req.user.id, value: rating });
+        }
+
+        await recipe.save();
+        res.json(recipe);
+
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

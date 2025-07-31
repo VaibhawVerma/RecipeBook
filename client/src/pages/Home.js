@@ -7,7 +7,7 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // This useEffect hook will run whenever the searchTerm changes.
+    // useEffect hook will run whenever the searchTerm changes
     useEffect(() => {
         const fetchRecipes = async () => {
             setLoading(true);
@@ -22,17 +22,17 @@ const Home = () => {
             }
         };
 
-        // This is a debounce timer. It waits 500ms after the user stops typing
-        // before sending the API request. This prevents excessive API calls.
+        //  debounce timer, waits 500ms after the user stops typing
+        // before sending the API request, prevents excessive API calls
         const timerId = setTimeout(() => {
             fetchRecipes();
         }, 500);
 
-        // This is a cleanup function that clears the timer if the user types again.
+        // cleanup function that clears the timer if the user types again
         return () => {
             clearTimeout(timerId);
         };
-    }, [searchTerm]); // The effect depends on the searchTerm state.
+    }, [searchTerm]); // effect depends on the searchTerm state
 
     return (
         <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
