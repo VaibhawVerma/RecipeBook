@@ -11,10 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// using Cloudinary, no need for local storage 
-// app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
-
-
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/recipes', require('./routes/recipes'));
