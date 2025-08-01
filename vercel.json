@@ -1,8 +1,22 @@
 {
+  "version": 2,
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/build"
+      }
+    }
+  ],
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://recipebook-api-4uvj.onrender.com/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://recipebook-api-4uvj.onrender.com/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
