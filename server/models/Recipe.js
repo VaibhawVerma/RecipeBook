@@ -24,4 +24,7 @@ const RecipeSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now }
 });
 
+// special text index, makes searching incredibly fast
+RecipeSchema.index({ title: 'text', description: 'text', ingredients: 'text' });
+
 module.exports = mongoose.model('recipe', RecipeSchema);

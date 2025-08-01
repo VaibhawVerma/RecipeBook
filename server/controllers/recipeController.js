@@ -2,15 +2,6 @@ const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const { cloudinary } = require('../config/cloudinary');
 
-// Helper function to delete a file
-const deleteFile = (filePath) => {
-    const fullPath = path.join(__dirname, '..', '..', filePath);
-    if (fs.existsSync(fullPath)) {
-        fs.unlink(fullPath, err => {
-            if (err) console.error("Error deleting file:", err);
-        });
-    }
-};
 
 // @desc    Add a comment to a recipe
 // @route   POST /api/recipes/:id/comment
@@ -71,24 +62,50 @@ exports.deleteComment = async (req, res) => {
     }
 };
 
-
+// UPDATED to use text index
 exports.getAllRecipes = async (req, res) => {
     const pageSize = 8;
     const page = Number(req.query.page) || 1;
 
     try {
-        const keyword = req.query.search ? { $or: [ { title: { $regex: req.query.search, $options: 'i' } }, { description: { $regex: req.query.search, $options: 'i' } }, { ingredients: { $regex: req.query.search, $options: 'i' } }, ], } : {};
+        let keyword = {};
+        if (req.query.search) {
+            const searchTerms = req.query.search.split(' ').map(term => `(?=.*${term})`).join('');
+            const regex = new RegExp(`${searchTerms}`, 'i');
+            
+            keyword = {
+                $or: [
+                    { title: regex },
+                    { description: regex },
+                    { ingredients: regex },
+                ],
+            };
+        }
         
-        // --- NEW CATEGORY FILTER ---
         const category = req.query.category ? { category: req.query.category } : {};
-        // The final query combines the keyword search and the category filter
         const finalQuery = { ...keyword, ...category };
-        // --- END CATEGORY FILTER ---
 
         const count = await Recipe.countDocuments(finalQuery);
         const recipes = await Recipe.find(finalQuery).sort({ date: -1 }).limit(pageSize).skip(pageSize * (page - 1));
         
         res.json({ recipes, page, pages: Math.ceil(count / pageSize) });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.getRecipeSuggestions = async (req, res) => {
+    try {
+        const keyword = req.query.search
+            ? { title: { $regex: req.query.search, $options: 'i' } }
+            : {};
+
+        const suggestions = await Recipe.find({ ...keyword })
+            .limit(5)
+            .select('title');
+
+        res.json(suggestions);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 // Route Order
 router.get('/my', authMiddleware, recipeController.getUserRecipes);
+router.get('/suggestions', recipeController.getRecipeSuggestions);
 router.get('/', recipeController.getAllRecipes);
 router.get('/:id', recipeController.getRecipeById);
 
@@ -16,8 +17,6 @@ router.post('/', authMiddleware, upload.single('image'), recipeController.create
 router.put('/:id', authMiddleware, upload.single('image'), recipeController.updateRecipe);
 router.delete('/:id', authMiddleware, recipeController.deleteRecipe);
 router.put('/:id/rate', authMiddleware, recipeController.rateRecipe);
-
-
 router.post('/:id/comment', authMiddleware, recipeController.addComment);
 router.delete('/:id/comment/:comment_id', authMiddleware, recipeController.deleteComment);
 
