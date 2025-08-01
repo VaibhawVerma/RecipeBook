@@ -134,27 +134,31 @@ exports.getUserRecipes = async (req, res) => {
     }
 };
 
-// UPDATED for Cloudinary
 exports.createRecipe = async (req, res) => {
     const { title, description, ingredients, instructions, category } = req.body;
     try {
         const user = await User.findById(req.user.id).select('-password');
-        const newRecipe = new Recipe({
+        
+        const recipeData = {
             title, description, ingredients: Array.isArray(ingredients) ? ingredients : [ingredients], instructions, category,
-            imageUrl: req.file ? req.file.path : '', // URL from Cloudinary
-            cloudinaryId: req.file ? req.file.filename : '', // filename/ID from Cloudinary
             author: user.name,
             user: req.user.id
-        });
+        };
+
+        if (req.file) {
+            recipeData.imageUrl = req.file.path;
+            recipeData.cloudinaryId = req.file.filename;
+        }
+
+        const newRecipe = new Recipe(recipeData);
         const recipe = await newRecipe.save();
-        res.json(recipe);
+        res.status(201).json(recipe);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error in createRecipe:", err.message);
         res.status(500).send('Server Error');
     }
 };
 
-// UPDATED for Cloudinary
 exports.updateRecipe = async (req, res) => {
     const { title, description, ingredients, instructions, category } = req.body;
     try {
@@ -162,16 +166,15 @@ exports.updateRecipe = async (req, res) => {
         if (!recipe) return res.status(404).json({ msg: 'Recipe not found' });
         if (recipe.user.toString() !== req.user.id) return res.status(401).json({ msg: 'Not authorized' });
         
-        // If old image, delete it from Cloudinary
-        if (req.file && recipe.cloudinaryId) {
-            await cloudinary.uploader.destroy(recipe.cloudinaryId);
-        }
+        const updatedFields = { title, description, ingredients: Array.isArray(ingredients) ? ingredients : [ingredients], instructions, category };
         
-        const updatedFields = {
-            title, description, ingredients: Array.isArray(ingredients) ? ingredients : [ingredients], instructions, category,
-            imageUrl: req.file ? req.file.path : recipe.imageUrl,
-            cloudinaryId: req.file ? req.file.filename : recipe.cloudinaryId
-        };
+        if (req.file) {
+            if (recipe.cloudinaryId) {
+                await cloudinary.uploader.destroy(recipe.cloudinaryId);
+            }
+            updatedFields.imageUrl = req.file.path;
+            updatedFields.cloudinaryId = req.file.filename;
+        }
         
         recipe = await Recipe.findByIdAndUpdate(req.params.id, { $set: updatedFields }, { new: true });
         res.json(recipe);
@@ -181,7 +184,6 @@ exports.updateRecipe = async (req, res) => {
     }
 };
 
-// UPDATED for Cloudinary
 exports.deleteRecipe = async (req, res) => {
     try {
         let recipe = await Recipe.findById(req.params.id);

@@ -15,7 +15,7 @@ const RecipeDetail = () => {
     const [commentText, setCommentText] = useState(''); // State for new comment
     const [comments, setComments] = useState([]); // State for comments list
     const { id } = useParams();
-    const placeholderImage = "[https://placehold.co/1200x600/E2E8F0/4A5568?text=Recipe](https://placehold.co/1200x600/E2E8F0/4A5568?text=Recipe)";
+    const placeholderImage = "https://placehold.co/1200x600/E2E8F0/4A5568?text=Recipe";
 
     useEffect(() => {
         const token = localStorage.getItem('token');
