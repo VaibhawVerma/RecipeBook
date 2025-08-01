@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  server:
+
+    build: ./server
+
+    restart: always
+
+    ports:
+      - "5000:5000"
+
+    env_file:
+      - ./server/.env
+
+  # Defines frontend service.
+  client:
+
+    build: ./client
+    restart: always
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - server
