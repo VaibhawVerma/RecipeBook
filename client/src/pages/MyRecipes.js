@@ -26,14 +26,24 @@ const MyRecipes = () => {
     }, []);
 
     const deleteRecipe = async (id) => {
+        // copy of the current recipes just in case
+        const originalRecipes = [...recipes];
+
+        // update UI immediately by removing the recipe from the state
+        setRecipes(recipes.filter(recipe => recipe._id !== id));
+        showToast('Recipe deleted successfully');
+
         try {
+            // send actual delete request to the server in the background
             const token = localStorage.getItem('token');
             await axios.delete(`/api/recipes/${id}`, { headers: { 'x-auth-token': token } });
             setRecipes(recipes.filter(recipe => recipe._id !== id));
             showToast('Recipe deleted successfully.');
         } catch (err) {
+            // if server request fails, shows error and reverts UI
             console.error("Error deleting recipe:", err);
-            showToast('Failed to delete recipe.', 'error');
+            showToast('Failed to delete recipe. Please try again!', 'error');
+            setRecipes(originalRecipes);
         }  
     };
 
@@ -52,7 +62,7 @@ const MyRecipes = () => {
             ) : recipes.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm border-2 border-dashed">
                     <h3 className="text-xl font-medium text-gray-800">No Recipes Yet!</h3>
-                    <p className="text-gray-500 mt-2">Click the button above to add your first recipe.</p>
+                    <p className="text-gray-500 mt-2">Click the button above to add your first recipe</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
