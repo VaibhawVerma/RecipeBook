@@ -8,17 +8,16 @@ const RecipeCard = ({ recipe }) => {
     const navigate = useNavigate();
     const { favoriteIds, toggleFavorite } = useFavorites();
     const isFavorited = favoriteIds.has(recipe._id);
-    const placeholderImage = "https://placehold.co/400x300/E2E8F0/4A5568?text=Recipe";
+    const placeholderImage = "[https://placehold.co/400x300/E2E8F0/4A5568?text=Recipe](https://placehold.co/400x300/E2E8F0/4A5568?text=Recipe)";
     const averageRating = recipe.ratings?.length > 0 ? (recipe.ratings.reduce((acc, item) => item.value + acc, 0) / recipe.ratings.length).toFixed(1) : 0;
 
     const getOptimizedUrl = (url) => { if (url && url.includes('cloudinary')) { return url.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/'); } return url || placeholderImage; };
     const handleFavoriteClick = (e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(recipe._id); };
     const handleAuthorClick = (e) => { e.stopPropagation(); };
     
-    // External recipes will link to their original source, internal ones to our detail page
     const handleCardClick = () => {
         if (recipe.isExternal) {
-            window.open(recipe.sourceUrl, '_blank', 'noopener,noreferrer');
+            if (recipe.sourceUrl) window.open(recipe.sourceUrl, '_blank', 'noopener,noreferrer');
         } else {
             navigate(`/recipe/${recipe._id}`);
         }
@@ -27,7 +26,8 @@ const RecipeCard = ({ recipe }) => {
     return (
         <div onClick={handleCardClick} className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 h-full flex flex-col group relative cursor-pointer">
             {!recipe.isExternal && (
-                <button onClick={handleFavoriteClick} className="absolute top-3 right-3 z-10 bg-white/70 backdrop-blur-sm rounded-full p-2 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100" title={isFavorited ? "Remove from favorites" : "Add to favorites"}> <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-colors ${isFavorited ? 'text-red-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`} fill={isFavorited ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z" /> </svg> </button>
+                // --- THIS IS THE FIX ---
+                <button onClick={handleFavoriteClick} className="absolute top-3 right-3 z-10 bg-white/70 backdrop-blur-sm rounded-full p-2 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100" title={isFavorited ? "Remove from favorites" : "Add to favorites"}> <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" className={`h-6 w-6 transition-colors ${isFavorited ? 'text-red-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`} fill={isFavorited ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z" /> </svg> </button>
             )}
             <div className="w-full h-48 bg-gray-200">
                 <img src={getOptimizedUrl(recipe.imageUrl)} alt={recipe.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}/>
@@ -37,14 +37,12 @@ const RecipeCard = ({ recipe }) => {
                 <p className="text-gray-600 mb-4 flex-grow text-sm leading-relaxed">{recipe.description.substring(0, 100)}{recipe.description.length > 100 && '...'}</p>
                 <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 truncate">
-                        {/* --- NEW LOGIC FOR AUTHOR LINK --- */}
                         By: {recipe.isExternal ? (
                             <span className="text-gray-700 font-medium">{recipe.author}</span>
                         ) : (
                             <Link to={`/profile/${recipe.user}`} onClick={handleAuthorClick} className="hover:underline text-indigo-600">{recipe.author}</Link>
                         )}
                     </p>
-                    {/* --- NEW LOGIC FOR RATING DISPLAY --- */}
                     {recipe.ratings?.length > 0 && (
                         <div className="flex items-center space-x-1 flex-shrink-0">
                             <StarIcon />
