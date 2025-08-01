@@ -14,8 +14,10 @@ const RecipeSchema = new mongoose.Schema({
     ingredients: { type: [String], required: true },
     instructions: { type: String, required: true },
     imageUrl: { type: String, default: '' },
+
+    cloudinaryId: { type: String },
+
     author: { type: String },
-    
     category: { type: String },
     ratings: [ { user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true }, value: { type: Number, required: true, min: 1, max: 5 } } ],
     comments: [CommentSchema],

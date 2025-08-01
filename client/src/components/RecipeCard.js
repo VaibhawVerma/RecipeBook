@@ -11,6 +11,14 @@ const RecipeCard = ({ recipe }) => {
     const placeholderImage = "https://placehold.co/600x400/E2E8F0/4A5568?text=Recipe";
     const averageRating = recipe.ratings.length > 0 ? (recipe.ratings.reduce((acc, item) => item.value + acc, 0) / recipe.ratings.length).toFixed(1) : 0;
 
+    // optimization of image using Cloudinary 
+    const getOptimizedUrl = (url) => {
+        if (url && url.includes('cloudinary')) {
+            return url.replace('/upload/', '/upload/w_400,h_300,c_fill/');
+        }
+        return url || placeholderImage;
+    };
+
     const handleFavoriteClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -38,13 +46,13 @@ const RecipeCard = ({ recipe }) => {
             </button>
 
             <div className="w-full h-48 bg-gray-200">
-                <img src={recipe.imageUrl || placeholderImage} alt={recipe.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}/>
+                <img src={getOptimizedUrl(recipe.imageUrl)} alt={recipe.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}/>
             </div>
             <div className="p-6 flex-grow flex flex-col">
                 <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-indigo-600 transition-colors truncate">{recipe.title}</h3>
                 <p className="text-gray-600 mb-4 flex-grow text-sm leading-relaxed">{recipe.description.substring(0, 100)}{recipe.description.length > 100 && '...'}</p>
                 <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
-                    {/* 5. The author link is now the only Link, so there is no nesting */}
+                    {/* no nesting */}
                     <p className="text-xs text-gray-500 truncate">
                         By: <Link to={`/profile/${recipe.user}`} onClick={handleAuthorClick} className="hover:underline text-indigo-600">{recipe.author}</Link>
                     </p>

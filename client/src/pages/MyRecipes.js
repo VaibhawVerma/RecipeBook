@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
+import RecipeCardSkeleton from '../components/RecipeCardSkeleton';
 
 const MyRecipes = () => {
     const [recipes, setRecipes] = useState([]);
@@ -44,7 +45,11 @@ const MyRecipes = () => {
                 <h1 className="text-3xl font-bold text-gray-900">My Recipes</h1>
                 <Link to="/create-recipe" className="bg-indigo-600 text-white py-2 px-5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-px">+ Add New Recipe</Link>
             </div>
-            {recipes.length === 0 ? (
+            {loading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {Array.from({ length: 4 }).map((_, index) => <RecipeCardSkeleton key={index} />)}
+                </div>
+            ) : recipes.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm border-2 border-dashed">
                     <h3 className="text-xl font-medium text-gray-800">No Recipes Yet!</h3>
                     <p className="text-gray-500 mt-2">Click the button above to add your first recipe.</p>

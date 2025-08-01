@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
 import { useToast } from '../context/ToastContext';
+import imageCompression from 'browser-image-compression';
 
 const CreateRecipe = () => {
     const [formData, setFormData] = useState({ title: '', description: '', ingredients: '', instructions: '', category: '' });
@@ -34,10 +35,37 @@ const CreateRecipe = () => {
     }, [id]);
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const onFileChange = e => { const file = e.target.files[0]; if (file && file.type.startsWith('image')) { setImage(file); setImagePreview(URL.createObjectURL(file)); } else { setImage(null); } };
+    
+    const onFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith('image')) {
+            setImage(null);
+            return;
+        }
+
+        setImagePreview(URL.createObjectURL(file)); // Show preview immediately
+
+        // Compression options
+        const options = {
+            maxSizeMB: 1,          // Max file size in MB
+            maxWidthOrHeight: 1920, // Max width or height
+            useWebWorker: true,
+        };
+
+        try {
+            console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Compressed file size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            setImage(compressedFile);
+        } catch (error) {
+            console.error('Error compressing image:', error);
+            setImage(file); // Fallback to the original file if compression fails
+        }
+    };
+
     const removeImage = () => { setImage(null); setImagePreview(''); };
 
-    const onSubmit = async e => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
@@ -46,7 +74,7 @@ const CreateRecipe = () => {
         recipeFormData.append('title', formData.title);
         recipeFormData.append('description', formData.description);
         recipeFormData.append('instructions', formData.instructions);
-        recipeFormData.append('category', formData.category); // Append category to form data
+        recipeFormData.append('category', formData.category);
         
         const ingredientsArray = formData.ingredients.split(',').map(item => item.trim()).filter(item => item);
         if (ingredientsArray.length === 0) { setError("Please add at least one ingredient."); setLoading(false); return; }
