@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 const Navbar = ({ setIsAuthenticated }) => {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false); // State for mobile menu
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -22,6 +24,7 @@ const Navbar = ({ setIsAuthenticated }) => {
     const onLogout = () => {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
+        showToast('You have been logged out.');
         window.dispatchEvent(new Event('appAuthChange'));
     };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { useToast } from './ToastContext';
 
 const FavoritesContext = React.createContext();
 
@@ -10,6 +11,7 @@ export const useFavorites = () => {
 
 export const FavoritesProvider = ({ children }) => {
     const [favoriteIds, setFavoriteIds] = useState(new Set());
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchFavorites = async () => {
@@ -40,9 +42,11 @@ export const FavoritesProvider = ({ children }) => {
         if (!token) return;
 
         const originalFavorites = new Set(favoriteIds);
+        const newFavoriteIds = new Set(favoriteIds);
+        const isCurrentlyFavorited = newFavoriteIds.has(recipeId);
+
         try {
-            const newFavoriteIds = new Set(favoriteIds);
-            if (newFavoriteIds.has(recipeId)) {
+            if (isCurrentlyFavorited) {
                 newFavoriteIds.delete(recipeId);
             } else {
                 newFavoriteIds.add(recipeId);
@@ -51,9 +55,13 @@ export const FavoritesProvider = ({ children }) => {
 
             const config = { headers: { 'x-auth-token': token } };
             await axios.put(`/api/users/favorites/${recipeId}`, {}, config);
+
+            showToast(isCurrentlyFavorited ? 'Removed from favorites' : 'Added to favorites!');
+
         } catch (err) {
             console.error("Failed to toggle favorite", err);
             setFavoriteIds(originalFavorites); // Revert UI on error
+            showToast('Could not update favorites', 'error');
         }
     };
 

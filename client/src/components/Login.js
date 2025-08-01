@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 // Accepts setIsAuthenticated as a prop from Auth.js
 const Login = ({ setIsAuthenticated }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
+    const { showToast } = useToast();
 
     const onChange = e => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,8 +18,8 @@ const Login = ({ setIsAuthenticated }) => {
         try {
             const res = await axios.post('/api/auth/login', formData);
             localStorage.setItem('token', res.data.token);
-            // This is the key: we call the function from App.js to update the state.
             setIsAuthenticated(true);
+            showToast('Logged in successfully!');
         } catch (err) {
             setError(err.response?.data?.msg || 'Login failed. Please check your credentials.');
         }

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 // Accepts setIsAuthenticated as a prop from Auth.js
 const Register = ({ setIsAuthenticated }) => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [error, setError] = useState('');
+    const { showToast } = useToast();
 
     const onChange = e => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,20 +23,19 @@ const Register = ({ setIsAuthenticated }) => {
     const onSubmit = async e => {
         e.preventDefault();
         
-        // --- VALIDATION LOGIC ---
         if (!validateEmail(formData.email)) {
             return setError('Please enter a valid email address.');
         }
         if (formData.password.length < 6) {
             return setError('Password must be at least 6 characters long.');
         }
-        // --- END VALIDATION ---
 
         try {
             const res = await axios.post('/api/auth/register', formData);
             localStorage.setItem('token', res.data.token);
             // This is the key: we call the function from App.js to update the state.
             setIsAuthenticated(true);
+            showToast('Welcome! Your account has been created.');
         } catch (err) {
             setError(err.response?.data?.msg || 'Registration failed. Please try again.');
         }

@@ -25,19 +25,15 @@ const MyRecipes = () => {
     }, []);
 
     const deleteRecipe = async (id) => {
-        // Using a custom modal/confirm could be a future improvement,
-        // but for now, we remove the blocking alert for a smoother flow.
-        if (window.confirm('Are you sure you want to permanently delete this recipe?')) {
-            try {
-                const token = localStorage.getItem('token');
-                await axios.delete(`/api/recipes/${id}`, { headers: { 'x-auth-token': token } });
-                setRecipes(recipes.filter(recipe => recipe._id !== id));
-                showToast('Recipe deleted successfully.');
-            } catch (err) {
-                console.error("Error deleting recipe:", err);
-                showToast('Failed to delete recipe.', 'error');
-            }
-        }
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`/api/recipes/${id}`, { headers: { 'x-auth-token': token } });
+            setRecipes(recipes.filter(recipe => recipe._id !== id));
+            showToast('Recipe deleted successfully.');
+        } catch (err) {
+            console.error("Error deleting recipe:", err);
+            showToast('Failed to delete recipe.', 'error');
+        }  
     };
 
     if (loading) return <p className="text-center mt-8 text-gray-500">Loading your recipes...</p>;
@@ -60,7 +56,7 @@ const MyRecipes = () => {
                             <li key={recipe._id} className="p-4 sm:p-6 group hover:bg-gray-50 transition-colors">
                                 <div className="flex justify-between items-center">
                                    <Link to={`/recipe/${recipe._id}`} className="flex-grow flex items-center space-x-4">
-                                        <img src={recipe.imageUrl || "[https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe](https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe)"} alt={recipe.title} className="h-16 w-16 object-cover rounded-md flex-shrink-0"/>
+                                        <img src={recipe.imageUrl || "https://placehold.co/100x100/E2E8F0/4A5568?text=Recipe"} alt={recipe.title} className="h-16 w-16 object-cover rounded-md flex-shrink-0"/>
                                         <div>
                                             <h3 className="text-lg font-semibold text-indigo-700 group-hover:underline">{recipe.title}</h3>
                                             <p className="text-gray-600 mt-1 text-sm">{recipe.description.substring(0, 80)}...</p>

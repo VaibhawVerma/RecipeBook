@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CATEGORIES } from '../constants'; // Import the categories
+import { CATEGORIES } from '../constants';
+import { useToast } from '../context/ToastContext';
 
 const CreateRecipe = () => {
-    // Add category to the initial form state
     const [formData, setFormData] = useState({ title: '', description: '', ingredients: '', instructions: '', category: '' });
-    // ... (other state variables remain the same) ...
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { id } = useParams();
+    const { showToast } = useToast();
 
     useEffect(() => {
         if (id) {
@@ -24,7 +24,7 @@ const CreateRecipe = () => {
                         description: data.description,
                         ingredients: data.ingredients.join(', '),
                         instructions: data.instructions,
-                        category: data.category // Set category from fetched data
+                        category: data.category
                     });
                     if (data.imageUrl) { setImagePreview(data.imageUrl); }
                 } catch (err) { setError("Could not load recipe data."); }
@@ -57,8 +57,14 @@ const CreateRecipe = () => {
         try {
             const token = localStorage.getItem('token');
             const config = { headers: { 'Content-Type': 'multipart/form-data', 'x-auth-token': token } };
-            if (id) { await axios.put(`/api/recipes/${id}`, recipeFormData, config); } 
-            else { await axios.post('/api/recipes', recipeFormData, config); }
+            if (id) {
+                await axios.put(`/api/recipes/${id}`, recipeFormData, config);
+                showToast('Recipe updated successfully!'); 
+            } 
+            else {
+                await axios.post('/api/recipes', recipeFormData, config);
+                showToast('Recipe created successfully!');
+            }
             navigate('/my-recipes');
         } catch (err) {
             setError(err.response?.data?.msg || 'An error occurred while saving.');
