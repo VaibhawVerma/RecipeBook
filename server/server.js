@@ -8,10 +8,13 @@ dotenv.config();
 connectDB();
 const app = express();
 
+const allowedOrigins = ['https://recipe-book-6q6u3ywm-vaibhaw-vermas-projects.vercel.app'];
+
 app.use(cors({
-  origin: ["https://recipe-book-new-test.vercel.app"],
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
 }));
+
 app.options('*', cors());
 
 app.use(express.json());
