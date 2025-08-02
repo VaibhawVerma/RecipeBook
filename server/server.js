@@ -8,7 +8,12 @@ dotenv.config();
 connectDB();
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://recipe-book-new-test.vercel.app"],
+  credentials: true
+}));
+app.options('*', cors());
+
 app.use(express.json());
 
 // API Routes
